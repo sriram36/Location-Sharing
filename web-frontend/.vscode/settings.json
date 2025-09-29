@@ -1,0 +1,8 @@
+{
+  "typescript.preferences.includePackageJsonAutoImports": "off",
+  "typescript.validate.enable": true,
+  "extensions.recommendations": [
+    "esbenp.prettier-vscode",
+    "@supabase.supabase"
+  ]
+}
