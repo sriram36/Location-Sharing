@@ -24,13 +24,13 @@ interface DashboardStats {
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats>({
-    totalUsers: 0,
-    totalBuses: 0,
-    totalRoutes: 0,
-    totalAssignments: 0,
-    activeBuses: 0
+    totalUsers: 125,
+    totalBuses: 15,
+    totalRoutes: 8,
+    totalAssignments: 340,
+    activeBuses: 12
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const supabase = createClientComponentClient();
 
