@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { createSupabaseClient } from "@/lib/supabaseClient";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { busSchema } from "@/lib/validation";
 
 type Bus = {
   id: string;
@@ -12,25 +14,34 @@ type Bus = {
   users: { name: string } | null;
 };
 
-type Driver = {
-  id: string;
-  name: string | null;
-};
+type Driver = { id: string; name: string | null };
 
-function CreateBusForm({ drivers, onBusCreated }: { drivers: Driver[]; onBusCreated: () => void }) {
+function dbError(msg: string): string {
+  if (msg.includes("duplicate key") || msg.includes("unique"))
+    return "A bus with this name already exists.";
+  if (msg.includes("row-level security") || msg.includes("permission"))
+    return "Permission denied.";
+  if (msg.includes("foreign key"))
+    return "Cannot delete — this bus is referenced by routes or assignments.";
+  return "Something went wrong. Please try again.";
+}
+
+function CreateBusForm({ drivers, onCreated }: { drivers: Driver[]; onCreated: () => void }) {
   const [name, setName] = useState("");
-  const [driverId, setDriverId] = useState<string>("");
+  const [driverId, setDriverId] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const parsed = busSchema.safeParse({ name, driver_id: driverId || null, status: "inactive" });
+    if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
     setLoading(true);
     const supabase = createSupabaseClient();
     const { error } = await supabase
       .from("buses")
-      .insert({ name, driver_id: driverId || null, status: "inactive" });
-    if (error) alert(error.message);
-    else { setName(""); setDriverId(""); onBusCreated(); }
+      .insert({ name: name.trim(), driver_id: driverId || null, status: "inactive" });
+    if (error) toast.error(dbError(error.message));
+    else { toast.success(`Bus "${name.trim()}" added.`); setName(""); setDriverId(""); onCreated(); }
     setLoading(false);
   };
 
@@ -44,7 +55,6 @@ function CreateBusForm({ drivers, onBusCreated }: { drivers: Driver[]; onBusCrea
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="p-2 border rounded bg-white dark:bg-gray-700"
-          required
         />
         <select
           value={driverId}
@@ -52,16 +62,14 @@ function CreateBusForm({ drivers, onBusCreated }: { drivers: Driver[]; onBusCrea
           className="p-2 border rounded bg-white dark:bg-gray-700"
         >
           <option value="">Assign driver (optional)</option>
-          {drivers.map((d) => (
-            <option key={d.id} value={d.id}>{d.name}</option>
-          ))}
+          {drivers.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
         </select>
         <button
           type="submit"
           disabled={loading}
           className="p-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
         >
-          {loading ? "Adding..." : "Add Bus"}
+          {loading ? "Adding…" : "Add Bus"}
         </button>
       </div>
     </form>
@@ -76,14 +84,16 @@ function EditBusDialog({ bus, drivers, onUpdated }: { bus: Bus; drivers: Driver[
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
+    const parsed = busSchema.safeParse({ name, driver_id: driverId || null, status });
+    if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
     setLoading(true);
     const supabase = createSupabaseClient();
     const { error } = await supabase
       .from("buses")
-      .update({ name, driver_id: driverId || null, status })
+      .update({ name: name.trim(), driver_id: driverId || null, status })
       .eq("id", bus.id);
-    if (error) alert(error.message);
-    else { setOpen(false); onUpdated(); }
+    if (error) toast.error(dbError(error.message));
+    else { toast.success("Bus updated."); setOpen(false); onUpdated(); }
     setLoading(false);
   };
 
@@ -93,9 +103,7 @@ function EditBusDialog({ bus, drivers, onUpdated }: { bus: Bus; drivers: Driver[
         <Button variant="outline" size="sm">Edit</Button>
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Edit Bus</DialogTitle>
-        </DialogHeader>
+        <DialogHeader><DialogTitle>Edit Bus</DialogTitle></DialogHeader>
         <div className="grid gap-4 py-4">
           <div>
             <label className="text-sm font-medium mb-1 block">Bus Name</label>
@@ -114,9 +122,7 @@ function EditBusDialog({ bus, drivers, onUpdated }: { bus: Bus; drivers: Driver[
               className="w-full p-2 border rounded bg-white dark:bg-gray-700"
             >
               <option value="">Unassigned</option>
-              {drivers.map((d) => (
-                <option key={d.id} value={d.id}>{d.name}</option>
-              ))}
+              {drivers.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
             </select>
           </div>
           <div>
@@ -132,7 +138,7 @@ function EditBusDialog({ bus, drivers, onUpdated }: { bus: Bus; drivers: Driver[
             </select>
           </div>
           <Button onClick={handleSave} disabled={loading}>
-            {loading ? "Saving..." : "Save Changes"}
+            {loading ? "Saving…" : "Save Changes"}
           </Button>
         </div>
       </DialogContent>
@@ -141,8 +147,8 @@ function EditBusDialog({ bus, drivers, onUpdated }: { bus: Bus; drivers: Driver[
 }
 
 const statusBadge: Record<Bus["status"], string> = {
-  active: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  inactive: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
+  active:      "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  inactive:    "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
   maintenance: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
 };
 
@@ -158,7 +164,7 @@ export default function ManageBusesPage() {
       supabase.from("buses").select("id, name, status, driver_id, users(name)").order("name"),
       supabase.from("users").select("id, name").eq("role", "driver").order("name"),
     ]);
-    if (busErr || driverErr) alert(busErr?.message ?? driverErr?.message);
+    if (busErr || driverErr) toast.error(dbError(busErr?.message ?? driverErr?.message ?? ""));
     else {
       setBuses((busData ?? []) as unknown as Bus[]);
       setDrivers(driverData ?? []);
@@ -172,16 +178,16 @@ export default function ManageBusesPage() {
     if (!confirm(`Delete bus "${name}"? This cannot be undone.`)) return;
     const supabase = createSupabaseClient();
     const { error } = await supabase.from("buses").delete().eq("id", id);
-    if (error) alert(error.message);
-    else fetchData();
+    if (error) toast.error(dbError(error.message));
+    else { toast.success(`Bus "${name}" deleted.`); fetchData(); }
   };
 
-  if (loading) return <p className="p-8">Loading...</p>;
+  if (loading) return <p className="p-4 text-muted-foreground">Loading buses…</p>;
 
   return (
-    <div className="p-8">
+    <div>
       <h1 className="text-2xl font-bold mb-6">Manage Buses</h1>
-      <CreateBusForm drivers={drivers} onBusCreated={fetchData} />
+      <CreateBusForm drivers={drivers} onCreated={fetchData} />
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white dark:bg-gray-800 rounded-lg shadow">
           <thead>
@@ -194,15 +200,13 @@ export default function ManageBusesPage() {
           </thead>
           <tbody>
             {buses.length === 0 && (
-              <tr>
-                <td colSpan={4} className="p-6 text-center text-gray-500">No buses yet. Add one above.</td>
-              </tr>
+              <tr><td colSpan={4} className="p-6 text-center text-muted-foreground">No buses yet. Add one above.</td></tr>
             )}
             {buses.map((bus) => (
               <tr key={bus.id} className="border-b border-gray-200 dark:border-gray-700">
                 <td className="p-3 font-medium">{bus.name}</td>
-                <td className="p-3 text-gray-600 dark:text-gray-400">
-                  {bus.users?.name ?? <span className="italic text-gray-400">Unassigned</span>}
+                <td className="p-3 text-muted-foreground">
+                  {bus.users?.name ?? <span className="italic">Unassigned</span>}
                 </td>
                 <td className="p-3">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusBadge[bus.status]}`}>
