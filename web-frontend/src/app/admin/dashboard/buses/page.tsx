@@ -1,12 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { createSupabaseClient } from "@/lib/supabaseClient";
 
 type Bus = {
   id: string;
   name: string;
   driver_id: string | null;
-  // Join result is an array
   users: { name: string }[] | null;
 };
 
@@ -23,6 +22,7 @@ function CreateBusForm({ drivers, onBusCreated }: { drivers: Driver[], onBusCrea
   const handleCreateBus = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    const supabase = createSupabaseClient();
     const { error } = await supabase.from("buses").insert({ name, driver_id: driverId });
     if (error) {
       alert(error.message);
@@ -60,6 +60,7 @@ export default function ManageBusesPage() {
 
   const fetchBusesAndDrivers = async () => {
     setLoading(true);
+    const supabase = createSupabaseClient();
     const { data: busData, error: busError } = await supabase.from("buses").select(`
       id,
       name,

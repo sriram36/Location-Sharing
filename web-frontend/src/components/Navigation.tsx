@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createSupabaseClient } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
@@ -20,13 +20,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { 
-  Bus, 
-  Users, 
-  MapPin, 
-  Settings, 
-  LogOut, 
-  Menu, 
+import {
+  Bus,
+  Users,
+  MapPin,
+  Settings,
+  LogOut,
+  Menu,
   Home,
   UserCheck,
   Route,
@@ -45,9 +45,13 @@ export default function Navigation() {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
-  const supabase = createClientComponentClient();
+  // Hold the client in a ref so it's only created after mount (browser-only)
+  const supabaseRef = useRef<ReturnType<typeof createSupabaseClient> | null>(null);
 
   useEffect(() => {
+    const supabase = createSupabaseClient();
+    supabaseRef.current = supabase;
+
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
@@ -56,7 +60,7 @@ export default function Navigation() {
           .select('*')
           .eq('id', session.user.id)
           .single();
-        
+
         if (userProfile) {
           setUser(userProfile);
         }
@@ -67,17 +71,17 @@ export default function Navigation() {
     getUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event: any, session: any) => {
-        if (event === 'SIGNED_OUT' || !session) {
+      async (_event: string, session: { user: { id: string } } | null) => {
+        if (!session) {
           setUser(null);
           router.push('/');
-        } else if (session) {
+        } else {
           const { data: userProfile } = await supabase
             .from('users')
             .select('*')
             .eq('id', session.user.id)
             .single();
-          
+
           if (userProfile) {
             setUser(userProfile);
           }
@@ -86,9 +90,10 @@ export default function Navigation() {
     );
 
     return () => subscription.unsubscribe();
-  }, [supabase, router]);
+  }, [router]);
 
   const handleLogout = async () => {
+    const supabase = supabaseRef.current ?? createSupabaseClient();
     await supabase.auth.signOut();
     router.push('/');
   };
@@ -97,9 +102,9 @@ export default function Navigation() {
     if (!user) return [];
 
     const baseItems = [
-      { 
-        href: `/${user.role}/dashboard`, 
-        label: 'Dashboard', 
+      {
+        href: `/${user.role}/dashboard`,
+        label: 'Dashboard',
         icon: Home,
         active: pathname === `/${user.role}/dashboard`
       }
@@ -109,61 +114,27 @@ export default function Navigation() {
       case 'admin':
         return [
           ...baseItems,
-          { 
-            href: '/admin/dashboard/users', 
-            label: 'Users', 
-            icon: Users,
-            active: pathname === '/admin/dashboard/users'
-          },
-          { 
-            href: '/admin/dashboard/buses', 
-            label: 'Buses', 
-            icon: Bus,
-            active: pathname === '/admin/dashboard/buses'
-          },
-          { 
-            href: '/admin/dashboard/routes', 
-            label: 'Routes', 
-            icon: Route,
-            active: pathname === '/admin/dashboard/routes'
-          },
-          { 
-            href: '/admin/dashboard/assignments', 
-            label: 'Assignments', 
-            icon: UserPlus,
-            active: pathname === '/admin/dashboard/assignments'
-          }
+          { href: '/admin/dashboard/users', label: 'Users', icon: Users, active: pathname === '/admin/dashboard/users' },
+          { href: '/admin/dashboard/buses', label: 'Buses', icon: Bus, active: pathname === '/admin/dashboard/buses' },
+          { href: '/admin/dashboard/routes', label: 'Routes', icon: Route, active: pathname === '/admin/dashboard/routes' },
+          { href: '/admin/dashboard/assignments', label: 'Assignments', icon: UserPlus, active: pathname === '/admin/dashboard/assignments' }
         ];
       case 'parent':
         return [
           ...baseItems,
-          { 
-            href: '/parent/dashboard/tracking', 
-            label: 'Track Bus', 
-            icon: MapPin,
-            active: pathname === '/parent/dashboard/tracking'
-          }
+          { href: '/parent/dashboard/tracking', label: 'Track Bus', icon: MapPin, active: pathname === '/parent/dashboard/tracking' }
         ];
       case 'driver':
         return [
           ...baseItems,
-          { 
-            href: '/driver/dashboard/location', 
-            label: 'Share Location', 
-            icon: MapPin,
-            active: pathname === '/driver/dashboard/location'
-          }
+          { href: '/driver/dashboard/location', label: 'Share Location', icon: MapPin, active: pathname === '/driver/dashboard/location' }
         ];
       default:
         return baseItems;
     }
   };
 
-  if (isLoading) {
-    return null;
-  }
-
-  if (!user) {
+  if (isLoading || !user) {
     return null;
   }
 
@@ -173,13 +144,11 @@ export default function Navigation() {
     <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
           <div className="flex items-center space-x-2">
             <Bus className="h-6 w-6 text-blue-600" />
             <span className="font-bold text-lg">Bus Tracker</span>
           </div>
 
-          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
             {navigationItems.map((item) => {
               const Icon = item.icon;
@@ -197,11 +166,9 @@ export default function Navigation() {
             })}
           </div>
 
-          {/* Right Side */}
           <div className="flex items-center space-x-4">
             <ThemeToggle />
-            
-            {/* User Menu */}
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center space-x-2">
@@ -214,12 +181,8 @@ export default function Navigation() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">
-                      {user.full_name || user.email}
-                    </p>
-                    <p className="text-xs text-muted-foreground capitalize">
-                      {user.role}
-                    </p>
+                    <p className="text-sm font-medium">{user.full_name || user.email}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -235,7 +198,6 @@ export default function Navigation() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Mobile Menu */}
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="md:hidden">

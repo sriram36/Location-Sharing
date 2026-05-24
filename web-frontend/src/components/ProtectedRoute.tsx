@@ -1,7 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+import { createSupabaseClient } from "@/lib/supabaseClient";
 import { useState } from "react";
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -9,6 +9,8 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const supabase = createSupabaseClient();
+
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -18,7 +20,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
       }
     };
     checkAuth();
-    // Optionally, listen for auth state changes
+
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) router.replace("/login");
     });

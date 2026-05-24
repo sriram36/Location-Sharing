@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { createSupabaseClient } from "@/lib/supabaseClient";
 
 export default function DriverDashboard() {
   const [isTripActive, setIsTripActive] = useState(false);
@@ -9,6 +9,7 @@ export default function DriverDashboard() {
   const [busId, setBusId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const supabase = createSupabaseClient();
 
   // Get the driver's assigned bus
   const getDriverBus = async () => {

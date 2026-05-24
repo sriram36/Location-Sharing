@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createSupabaseClient } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,36 +19,35 @@ export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
-  const supabase = createClientComponentClient();
 
   useEffect(() => {
-    // Check if user is already logged in
+    const supabase = createSupabaseClient();
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        // Redirect to appropriate dashboard based on role
         const { data: userProfile } = await supabase
           .from('users')
           .select('role')
           .eq('id', session.user.id)
           .single();
-        
+
         if (userProfile?.role) {
           router.push(`/${userProfile.role}/dashboard`);
         }
       }
     };
     checkUser();
-  }, [router, supabase]);
+  }, [router]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
-    
+    const supabase = createSupabaseClient();
+
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({ 
-        email, 
+      const { error } = await supabase.auth.signUp({
+        email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/login`
@@ -62,17 +61,15 @@ export default function LoginPage() {
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (!error) {
-        // Get user profile to determine role
         const { data: userProfile } = await supabase
           .from('users')
           .select('role')
           .eq('email', email)
           .single();
-        
+
         if (userProfile?.role) {
           router.push(`/${userProfile.role}/dashboard`);
         } else {
-          // If no role found, redirect to a default page or show error
           setMessage("User profile not found. Please contact administrator.");
         }
       } else {

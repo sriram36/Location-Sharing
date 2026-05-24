@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createSupabaseClient } from "@/lib/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,9 +23,8 @@ export default function ProfilePage() {
   const [updating, setUpdating] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [fullName, setFullName] = useState("");
-  const supabase = createClientComponentClient();
-
   useEffect(() => {
+    const supabase = createSupabaseClient();
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
@@ -34,7 +33,7 @@ export default function ProfilePage() {
           .select('*')
           .eq('id', session.user.id)
           .single();
-        
+
         if (userProfile) {
           setUser(userProfile);
           setFullName(userProfile.full_name || "");
@@ -44,7 +43,7 @@ export default function ProfilePage() {
     };
 
     getUser();
-  }, [supabase]);
+  }, []);
 
   const updateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +51,7 @@ export default function ProfilePage() {
 
     setUpdating(true);
     setMessage(null);
+    const supabase = createSupabaseClient();
 
     const { error } = await supabase
       .from('users')

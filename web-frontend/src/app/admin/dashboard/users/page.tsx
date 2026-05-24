@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { createSupabaseClient } from "@/lib/supabaseClient";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +32,7 @@ function CreateUserForm({ onUserCreated }: { onUserCreated: () => void }) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    const supabase = createSupabaseClient();
 
     const { error: authError } = await supabase.auth.signUp({
       email,
@@ -130,6 +131,7 @@ function EditUserDialog({
 
   const handleUpdateUser = async () => {
     setLoading(true);
+    const supabase = createSupabaseClient();
     const { error } = await supabase
       .from("users")
       .update({ name, phone, role })
@@ -191,6 +193,7 @@ export default function ManageUsersPage() {
 
   const fetchUsers = async () => {
     setLoading(true);
+    const supabase = createSupabaseClient();
     const { data, error } = await supabase.from("users").select("*");
     if (error) setError(error.message);
     else setUsers(data || []);
@@ -208,6 +211,7 @@ export default function ManageUsersPage() {
       )
     ) {
       try {
+        const supabase = createSupabaseClient();
         const { error } = await supabase.functions.invoke("delete-user", {
           body: { userId },
         });

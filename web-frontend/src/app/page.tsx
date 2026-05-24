@@ -5,7 +5,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createSupabaseClient } from "@/lib/supabaseClient";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,26 +14,25 @@ import { Bus, Users, MapPin, Shield } from "lucide-react";
 
 export default function Home() {
   const router = useRouter();
-  const supabase = createClientComponentClient();
 
   useEffect(() => {
+    const supabase = createSupabaseClient();
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        // Redirect authenticated users to their appropriate dashboard
         const { data: userProfile } = await supabase
           .from('users')
           .select('role')
           .eq('id', session.user.id)
           .single();
-        
+
         if (userProfile?.role) {
           router.push(`/${userProfile.role}/dashboard`);
         }
       }
     };
     checkUser();
-  }, [router, supabase]);
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">

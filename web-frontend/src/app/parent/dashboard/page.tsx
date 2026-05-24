@@ -2,13 +2,14 @@
 import { useState, useEffect } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import DynamicMap from "@/components/DynamicMap";
-import { supabase } from "@/lib/supabaseClient";
+import { createSupabaseClient } from "@/lib/supabaseClient";
 
 export default function ParentDashboard() {
   const [busLocation, setBusLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [busId, setBusId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const supabase = createSupabaseClient();
 
   useEffect(() => {
     // First, get the current user and their assigned bus

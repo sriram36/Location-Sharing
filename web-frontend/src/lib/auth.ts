@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabaseClient';
+import { createSupabaseClient } from '@/lib/supabaseClient';
 
 export interface AuthUser extends User {
   role?: 'admin' | 'driver' | 'parent';
@@ -11,7 +11,8 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
+    const supabase = createSupabaseClient();
+
     const getInitialSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -26,9 +27,8 @@ export function useAuth() {
 
     getInitialSession();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (_event, session) => {
         setUser(session?.user as AuthUser || null);
         setLoading(false);
       }
@@ -38,6 +38,7 @@ export function useAuth() {
   }, []);
 
   const signOut = async () => {
+    const supabase = createSupabaseClient();
     try {
       await supabase.auth.signOut();
       setUser(null);
