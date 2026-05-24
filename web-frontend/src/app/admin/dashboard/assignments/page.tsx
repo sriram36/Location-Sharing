@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import { createSupabaseClient } from "@/lib/supabaseClient";
 
 interface StudentAssignment {
@@ -163,17 +162,14 @@ export default function AssignmentsPage() {
 
   if (loading) {
     return (
-      <ProtectedRoute>
-        <div className="flex items-center justify-center min-h-screen">
-          <p className="text-xl">Loading assignments...</p>
-        </div>
-      </ProtectedRoute>
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-xl">Loading assignments...</p>
+      </div>
     );
   }
 
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -307,7 +303,6 @@ export default function AssignmentsPage() {
             </div>
           </div>
         )}
-      </div>
-    </ProtectedRoute>
+    </div>
   );
 }

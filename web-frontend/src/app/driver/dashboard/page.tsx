@@ -7,6 +7,7 @@ export default function DriverDashboard() {
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busId, setBusId] = useState<string | null>(null);
+  const [busName, setBusName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const supabase = createSupabaseClient();
@@ -36,7 +37,7 @@ export default function DriverDashboard() {
       // Get the bus assigned to this driver
       const { data: bus, error: busError } = await supabase
         .from("buses")
-        .select("id")
+        .select("id, name")
         .eq("driver_id", user.id)
         .single();
 
@@ -46,6 +47,7 @@ export default function DriverDashboard() {
       }
 
       setBusId(bus.id);
+      setBusName(bus.name);
       setLoading(false);
       return bus.id;
     } catch (err) {
@@ -150,7 +152,7 @@ export default function DriverDashboard() {
           Driver Dashboard
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
-          Bus ID: <span className="font-mono text-blue-600 dark:text-blue-400">{busId}</span>
+          Assigned Bus: <span className="font-semibold text-blue-600 dark:text-blue-400">{busName}</span>
         </p>
       </div>
 

@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import DynamicMap from "@/components/DynamicMap";
 import { createSupabaseClient } from "@/lib/supabaseClient";
 
