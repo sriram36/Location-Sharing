@@ -12,7 +12,7 @@ import { BusManagementTable } from "@/components/ui/bus-management-table";
 import { StatsCard } from "@/components/ui/stats-card";
 import { ActionCard } from "@/components/ui/action-card";
 import { LoadingScreen } from "@/components/ui/loading";
-import { Users, Bus, Route, UserPlus, MapPin, Shield, TrendingUp, Activity, Plus, Settings, Bell } from "lucide-react";
+import { Users, Bus, Route, UserPlus, MapPin, Shield, TrendingUp, Activity, Plus } from "lucide-react";
 
 interface DashboardStats {
   totalUsers: number;
@@ -160,14 +160,8 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
             </div>
-            <div className="hidden lg:flex items-center space-x-3">
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4 mr-2" />Settings
-              </Button>
-              <Button variant="outline" size="sm">
-                <Bell className="h-4 w-4 mr-2" />Alerts
-              </Button>
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center animate-pulse">
+            <div className="hidden lg:flex items-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
                 <Shield className="h-8 w-8 text-white" />
               </div>
             </div>
@@ -238,7 +232,7 @@ export default function AdminDashboardPage() {
                 busNumber={bus.name}
                 driverName={bus.users?.name ?? "Unassigned"}
                 currentLocation="—"
-                status={stats.activeBuses > 0 ? "active" : "idle"}
+                status={tableBuses.find((t) => t.id === bus.id)?.status ?? "idle"}
                 studentCount={0}
                 maxCapacity={40}
               />

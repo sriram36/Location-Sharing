@@ -55,22 +55,19 @@ export default function Home() {
             School Bus Tracker
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-10 leading-relaxed">
-            Experience the future of school transportation with real-time GPS tracking, 
-            intelligent route management, and comprehensive safety monitoring.
+            Real-time GPS tracking for school buses. Parents see exactly where their child&apos;s bus is.
+            Drivers share their location. Administrators manage the fleet.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up" style={{ animationDelay: '0.3s' } as any}>
-            <Button 
+          <div className="flex justify-center animate-slide-up" style={{ animationDelay: '0.3s' } as any}>
+            <Button
               onClick={() => router.push('/login')}
               className="px-10 py-4 text-lg font-semibold rounded-xl hover-lift shadow-lg gradient-primary text-white border-0"
             >
-              Get Started
+              Sign In
               <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
             </Button>
-            <button className="px-8 py-4 text-lg font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
-              Watch Demo
-            </button>
           </div>
         </div>
 
@@ -83,8 +80,8 @@ export default function Home() {
               Real-Time Tracking
             </h3>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-              Live GPS tracking of school buses with millimeter precision, 
-              real-time notifications, and predictive arrival times powered by AI.
+              See your child&apos;s bus on a live map, updated every 10 seconds while the driver
+              has the trip active.
             </p>
             <div className="mt-6 flex items-center justify-center">
               <StatusIndicator status="online" showLabel />
@@ -99,8 +96,8 @@ export default function Home() {
               Multi-Role Access
             </h3>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-              Intuitive dashboards tailored for parents, drivers, and administrators 
-              with advanced permissions and role-based feature access.
+              Separate dashboards for parents, drivers, and administrators — each role
+              sees only what they need.
             </p>
             <div className="mt-6 flex items-center justify-center space-x-2">
               <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
@@ -117,8 +114,8 @@ export default function Home() {
               Secure & Reliable
             </h3>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-              Military-grade encryption, 99.9% uptime guarantee, and comprehensive 
-              audit trails ensure your data is always protected and accessible.
+              Built on Supabase with row-level security — each parent can only see
+              their own child&apos;s bus. No data leaks between accounts.
             </p>
             <div className="mt-6">
               <div className="flex items-center justify-center space-x-1">

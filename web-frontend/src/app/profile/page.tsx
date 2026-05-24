@@ -21,7 +21,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ text: string; success: boolean } | null>(null);
   const [displayName, setDisplayName] = useState("");
 
   useEffect(() => {
@@ -59,9 +59,9 @@ export default function ProfilePage() {
       .eq("id", user.id);
 
     if (error) {
-      setMessage(`Error updating profile: ${error.message}`);
+      setMessage({ text: "Could not update your profile. Please try again.", success: false });
     } else {
-      setMessage("Profile updated successfully!");
+      setMessage({ text: "Profile updated successfully!", success: true });
       setUser({ ...user, name: displayName });
     }
 
@@ -156,9 +156,15 @@ export default function ProfilePage() {
               </div>
 
               {message && (
-                <Alert className={message.includes("successfully") ? "border-green-200 bg-green-50 dark:bg-green-950" : ""}>
-                  <AlertDescription className={message.includes("successfully") ? "text-green-700 dark:text-green-400" : ""}>
-                    {message}
+                <Alert className={message.success
+                  ? "border-green-200 bg-green-50 dark:bg-green-950"
+                  : "border-red-200 bg-red-50 dark:bg-red-950"
+                }>
+                  <AlertDescription className={message.success
+                    ? "text-green-700 dark:text-green-400"
+                    : "text-red-700 dark:text-red-400"
+                  }>
+                    {message.text}
                   </AlertDescription>
                 </Alert>
               )}

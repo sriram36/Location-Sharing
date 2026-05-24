@@ -22,15 +22,11 @@ import {
 } from "@/components/ui/sheet";
 import {
   Bus,
-  Users,
-  MapPin,
   Settings,
   LogOut,
   Menu,
   Home,
   UserCheck,
-  Route,
-  UserPlus
 } from "lucide-react";
 
 interface User {
@@ -112,23 +108,12 @@ export default function Navigation() {
 
     switch (user.role) {
       case 'admin':
-        return [
-          ...baseItems,
-          { href: '/admin/dashboard/users', label: 'Users', icon: Users, active: pathname === '/admin/dashboard/users' },
-          { href: '/admin/dashboard/buses', label: 'Buses', icon: Bus, active: pathname === '/admin/dashboard/buses' },
-          { href: '/admin/dashboard/routes', label: 'Routes', icon: Route, active: pathname === '/admin/dashboard/routes' },
-          { href: '/admin/dashboard/assignments', label: 'Assignments', icon: UserPlus, active: pathname === '/admin/dashboard/assignments' }
-        ];
+        // Sub-routes handled by AdminNav tab bar — only show top-level here
+        return baseItems;
       case 'parent':
-        return [
-          ...baseItems,
-          { href: '/parent/dashboard/tracking', label: 'Track Bus', icon: MapPin, active: pathname === '/parent/dashboard/tracking' }
-        ];
+        return baseItems;
       case 'driver':
-        return [
-          ...baseItems,
-          { href: '/driver/dashboard/location', label: 'Share Location', icon: MapPin, active: pathname === '/driver/dashboard/location' }
-        ];
+        return baseItems;
       default:
         return baseItems;
     }
