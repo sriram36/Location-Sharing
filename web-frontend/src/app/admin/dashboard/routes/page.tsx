@@ -12,9 +12,9 @@ type Route = {
 type Stop = {
   id: string;
   name: string;
-  lat: number;
-  lng: number;
-  sequence: number;
+  latitude: number;
+  longitude: number;
+  stop_order: number;
 };
 
 type Bus = {
@@ -52,7 +52,7 @@ export default function ManageRoutesPage() {
     if (selectedRouteId) {
       const supabase = createSupabaseClient();
       const fetchStops = async () => {
-        const { data, error } = await supabase.from("stops").select("*").eq("route_id", selectedRouteId).order("sequence");
+        const { data, error } = await supabase.from("route_stops").select("*").eq("route_id", selectedRouteId).order("stop_order");
         if (error) alert(error.message);
         else setStops(data);
       };
@@ -85,7 +85,7 @@ export default function ManageRoutesPage() {
               <ul>
                 {stops.map(stop => (
                   <li key={stop.id} className="p-2 border-b">
-                    {stop.sequence}. {stop.name} ({stop.lat}, {stop.lng})
+                    {stop.stop_order}. {stop.name} ({stop.latitude.toFixed(5)}, {stop.longitude.toFixed(5)})
                   </li>
                 ))}
               </ul>

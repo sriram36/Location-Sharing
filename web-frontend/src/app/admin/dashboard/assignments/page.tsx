@@ -12,26 +12,24 @@ interface StudentAssignment {
   active: boolean;
   created_at: string;
   users?: {
-    full_name: string;
+    name: string;
     email: string;
   };
   buses?: {
-    license_plate: string;
-    capacity: number;
+    name: string;
   };
 }
 
 interface User {
   id: string;
-  full_name: string;
+  name: string;
   email: string;
   role: string;
 }
 
 interface Bus {
   id: string;
-  license_plate: string;
-  capacity: number;
+  name: string;
 }
 
 export default function AssignmentsPage() {
@@ -52,8 +50,8 @@ export default function AssignmentsPage() {
       .from("student_assignments")
       .select(`
         *,
-        users!student_assignments_parent_id_fkey(full_name, email),
-        buses(license_plate, capacity)
+        users!student_assignments_parent_id_fkey(name, email),
+        buses(name)
       `)
       .order("created_at", { ascending: false });
 
@@ -68,9 +66,9 @@ export default function AssignmentsPage() {
     const supabase = createSupabaseClient();
     const { data, error } = await supabase
       .from("users")
-      .select("id, full_name, email, role")
+      .select("id, name, email, role")
       .eq("role", "parent")
-      .order("full_name");
+      .order("name");
 
     if (error) {
       console.error("Error fetching users:", error);
@@ -83,8 +81,8 @@ export default function AssignmentsPage() {
     const supabase = createSupabaseClient();
     const { data, error } = await supabase
       .from("buses")
-      .select("id, license_plate, capacity")
-      .order("license_plate");
+      .select("id, name")
+      .order("name");
 
     if (error) {
       console.error("Error fetching buses:", error);
@@ -206,11 +204,11 @@ export default function AssignmentsPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{assignment.student_name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                       <div>
-                        <div className="font-medium">{assignment.users?.full_name}</div>
+                        <div className="font-medium">{assignment.users?.name}</div>
                         <div className="text-xs">{assignment.users?.email}</div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{assignment.buses?.license_plate}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{assignment.buses?.name}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                         assignment.active
@@ -266,7 +264,7 @@ export default function AssignmentsPage() {
                   >
                     <option value="">Select a parent</option>
                     {users.map((user) => (
-                      <option key={user.id} value={user.id}>{user.full_name} ({user.email})</option>
+                      <option key={user.id} value={user.id}>{user.name} ({user.email})</option>
                     ))}
                   </select>
                 </div>
@@ -280,7 +278,7 @@ export default function AssignmentsPage() {
                   >
                     <option value="">Select a bus</option>
                     {buses.map((bus) => (
-                      <option key={bus.id} value={bus.id}>{bus.license_plate} (Capacity: {bus.capacity})</option>
+                      <option key={bus.id} value={bus.id}>{bus.name}</option>
                     ))}
                   </select>
                 </div>

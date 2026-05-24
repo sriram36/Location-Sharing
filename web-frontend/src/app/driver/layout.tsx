@@ -8,7 +8,7 @@ export default function DriverLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requiredRole="driver">
       <div className="container mx-auto px-4 py-8">
         {children}
       </div>

@@ -8,7 +8,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requiredRole="admin">
       <div className="container mx-auto px-4 py-8">
         {children}
       </div>

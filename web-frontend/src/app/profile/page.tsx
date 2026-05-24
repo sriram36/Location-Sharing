@@ -12,7 +12,7 @@ import { User, Mail, UserCheck } from "lucide-react";
 interface UserProfile {
   id: string;
   email: string;
-  full_name?: string;
+  name?: string;
   role: string;
   created_at: string;
 }
@@ -22,26 +22,26 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [fullName, setFullName] = useState("");
+  const [displayName, setDisplayName] = useState("");
+
   useEffect(() => {
     const supabase = createSupabaseClient();
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         const { data: userProfile } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
+          .from("users")
+          .select("*")
+          .eq("id", session.user.id)
           .single();
 
         if (userProfile) {
           setUser(userProfile);
-          setFullName(userProfile.full_name || "");
+          setDisplayName(userProfile.name || "");
         }
       }
       setLoading(false);
     };
-
     getUser();
   }, []);
 
@@ -54,15 +54,15 @@ export default function ProfilePage() {
     const supabase = createSupabaseClient();
 
     const { error } = await supabase
-      .from('users')
-      .update({ full_name: fullName })
-      .eq('id', user.id);
+      .from("users")
+      .update({ name: displayName })
+      .eq("id", user.id);
 
     if (error) {
       setMessage(`Error updating profile: ${error.message}`);
     } else {
       setMessage("Profile updated successfully!");
-      setUser({ ...user, full_name: fullName });
+      setUser({ ...user, name: displayName });
     }
 
     setUpdating(false);
@@ -73,7 +73,7 @@ export default function ProfilePage() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
-            <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4" />
             <p className="text-xl font-medium">Loading profile...</p>
           </div>
         </div>
@@ -98,9 +98,7 @@ export default function ProfilePage() {
     <div className="container mx-auto px-4 py-8 max-w-2xl">
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Profile Settings
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Profile Settings</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
             Manage your account information and preferences
           </p>
@@ -127,9 +125,7 @@ export default function ProfilePage() {
                     className="pl-10 bg-gray-50 dark:bg-gray-900"
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Email cannot be changed
-                </p>
+                <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
               </div>
 
               <div>
@@ -143,20 +139,18 @@ export default function ProfilePage() {
                     className="pl-10 bg-gray-50 dark:bg-gray-900 capitalize"
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Role is assigned by administrators
-                </p>
+                <p className="text-xs text-gray-500 mt-1">Role is assigned by administrators</p>
               </div>
             </div>
 
             <form onSubmit={updateProfile} className="space-y-4">
               <div>
-                <Label htmlFor="fullName">Full Name</Label>
+                <Label htmlFor="displayName">Full Name</Label>
                 <Input
-                  id="fullName"
+                  id="displayName"
                   type="text"
-                  value={fullName}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFullName(e.target.value)}
+                  value={displayName}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDisplayName(e.target.value)}
                   placeholder="Enter your full name"
                 />
               </div>
@@ -169,11 +163,7 @@ export default function ProfilePage() {
                 </Alert>
               )}
 
-              <Button
-                type="submit"
-                disabled={updating}
-                className="w-full md:w-auto"
-              >
+              <Button type="submit" disabled={updating} className="w-full md:w-auto">
                 {updating ? "Updating..." : "Update Profile"}
               </Button>
             </form>

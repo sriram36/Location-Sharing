@@ -37,7 +37,7 @@ interface User {
   id: string;
   email: string;
   role: string;
-  full_name?: string;
+  name?: string;
 }
 
 export default function Navigation() {
@@ -174,14 +174,14 @@ export default function Navigation() {
                 <Button variant="ghost" className="flex items-center space-x-2">
                   <UserCheck className="h-4 w-4" />
                   <span className="hidden md:inline">
-                    {user.full_name || user.email}
+                    {user.name || user.email}
                   </span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">{user.full_name || user.email}</p>
+                    <p className="text-sm font-medium">{user.name || user.email}</p>
                     <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
                   </div>
                 </DropdownMenuLabel>
