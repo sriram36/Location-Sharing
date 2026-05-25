@@ -13,17 +13,17 @@ export default function DriverNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-wrap gap-1 border-b pb-4 mb-8">
+    <nav className="flex gap-1 mb-6">
       {navItems.map(({ href, label, icon: Icon, exact }) => {
         const active = exact ? pathname === href : pathname.startsWith(href);
         return (
           <Link
             key={href}
             href={href}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               active
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                ? "bg-blue-600 text-white shadow-sm"
+                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
             }`}
           >
             <Icon className="h-4 w-4" />

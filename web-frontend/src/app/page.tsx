@@ -1,137 +1,118 @@
-
-
-
 "use client";
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseClient } from "@/lib/supabaseClient";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Button } from "@/components/ui/button";
-import { StatusIndicator } from "@/components/ui/status-indicator";
-import { Bus, Users, MapPin, Shield } from "lucide-react";
+import { Bus, MapPin, Users, Shield, ArrowRight } from "lucide-react";
 
 export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
     const supabase = createSupabaseClient();
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: userProfile } = await supabase
-          .from('users')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
-
-        if (userProfile?.role) {
-          router.push(`/${userProfile.role}/dashboard`);
-        }
-      }
-    };
-    checkUser();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return;
+      supabase.from("users").select("role").eq("id", session.user.id).single()
+        .then(({ data }) => { if (data?.role) router.push(`/${data.role}/dashboard`); });
+    });
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <div className="absolute top-4 right-4">
-        <ThemeToggle />
-      </div>
-      
-      {/* Floating Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-72 h-72 gradient-primary opacity-20 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 gradient-success opacity-20 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' } as any} />
-        <div className="absolute top-1/2 left-1/2 w-48 h-48 gradient-warning opacity-20 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' } as any} />
-      </div>
-      
-      <div className="container mx-auto px-4 py-16 relative z-10">
-        <div className="text-center mb-16 animate-slide-up">
-          <div className="inline-flex items-center justify-center w-24 h-24 gradient-primary rounded-full mb-8 animate-float shadow-2xl">
-            <Bus className="w-12 h-12 text-white" />
+    <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col">
+      {/* Topbar */}
+      <header className="border-b border-gray-100 dark:border-gray-800">
+        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <Bus className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-bold text-gray-900 dark:text-white">School Bus Tracker</span>
           </div>
-          <h1 className="text-6xl font-bold text-gradient mb-6">
-            School Bus Tracker
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-10 leading-relaxed">
-            Real-time GPS tracking for school buses. Parents see exactly where their child&apos;s bus is.
-            Drivers share their location. Administrators manage the fleet.
-          </p>
-          <div className="flex justify-center animate-slide-up" style={{ animationDelay: '0.3s' } as any}>
-            <Button
-              onClick={() => router.push('/login')}
-              className="px-10 py-4 text-lg font-semibold rounded-xl hover-lift shadow-lg gradient-primary text-white border-0"
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <button
+              onClick={() => router.push("/login")}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
             >
-              Sign In
-              <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </Button>
+              Sign In <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
+      </header>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          <div className="glass-card hover-lift rounded-2xl p-8 text-center group animate-slide-up" style={{ animationDelay: '0.4s' } as any}>
-            <div className="mx-auto w-16 h-16 gradient-success rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-              <MapPin className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              Real-Time Tracking
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-              See your child&apos;s bus on a live map, updated every 10 seconds while the driver
-              has the trip active.
-            </p>
-            <div className="mt-6 flex items-center justify-center">
-              <StatusIndicator status="online" showLabel />
-            </div>
+      {/* Hero */}
+      <main className="flex-1">
+        <div className="container mx-auto px-6 pt-20 pb-16 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-full text-blue-700 dark:text-blue-300 text-sm font-medium mb-8">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+            </span>
+            Real-time GPS tracking
           </div>
 
-          <div className="glass-card hover-lift rounded-2xl p-8 text-center group animate-slide-up" style={{ animationDelay: '0.5s' } as any}>
-            <div className="mx-auto w-16 h-16 gradient-primary rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-              <Users className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              Multi-Role Access
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-              Separate dashboards for parents, drivers, and administrators — each role
-              sees only what they need.
-            </p>
-            <div className="mt-6 flex items-center justify-center space-x-2">
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' } as any} />
-              <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' } as any} />
-            </div>
-          </div>
+          <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 dark:text-white leading-tight tracking-tight mb-6">
+            Know exactly where<br />
+            <span className="text-blue-600">your child&apos;s bus is</span>
+          </h1>
 
-          <div className="glass-card hover-lift rounded-2xl p-8 text-center group animate-slide-up" style={{ animationDelay: '0.6s' } as any}>
-            <div className="mx-auto w-16 h-16 gradient-warning rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-              <Shield className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              Secure & Reliable
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-              Built on Supabase with row-level security — each parent can only see
-              their own child&apos;s bus. No data leaks between accounts.
-            </p>
-            <div className="mt-6">
-              <div className="flex items-center justify-center space-x-1">
-                <Shield className="w-4 h-4 text-green-500" />
-                <span className="text-sm font-medium text-green-600 dark:text-green-400">SSL Encrypted</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-16 text-center">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            &copy; {new Date().getFullYear()} School Bus Tracker System. All rights reserved.
+          <p className="text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+            Real-time GPS tracking for school buses. Parents track live. Drivers share location.
+            Administrators manage the entire fleet — one platform.
           </p>
+
+          <button
+            onClick={() => router.push("/login")}
+            className="inline-flex items-center gap-2 px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-xl transition-colors shadow-sm"
+          >
+            Get Started <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
-      </div>
+
+        {/* Features */}
+        <div className="container mx-auto px-6 pb-20">
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {[
+              {
+                icon: MapPin,
+                color: "bg-green-100 dark:bg-green-950 text-green-600 dark:text-green-400",
+                title: "Live GPS Tracking",
+                desc: "Bus location updates every 10 seconds while the driver has the trip active. Parents always know where the bus is.",
+              },
+              {
+                icon: Users,
+                color: "bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400",
+                title: "Role-Based Access",
+                desc: "Separate dashboards for parents, drivers, and administrators. Each role sees exactly what they need.",
+              },
+              {
+                icon: Shield,
+                color: "bg-purple-100 dark:bg-purple-950 text-purple-600 dark:text-purple-400",
+                title: "Secure by Default",
+                desc: "Row-level security ensures parents can only see their own child's bus. No data leaks between accounts.",
+              },
+            ].map(({ icon: Icon, color, title, desc }) => (
+              <div
+                key={title}
+                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-7 shadow-sm"
+              >
+                <div className={`w-11 h-11 ${color} rounded-xl flex items-center justify-center mb-5`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{title}</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+
+      <footer className="border-t border-gray-100 dark:border-gray-800 py-6">
+        <p className="text-center text-sm text-gray-400 dark:text-gray-600">
+          &copy; {new Date().getFullYear()} School Bus Tracker. All rights reserved.
+        </p>
+      </footer>
     </div>
   );
 }

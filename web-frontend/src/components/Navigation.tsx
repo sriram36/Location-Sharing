@@ -119,7 +119,8 @@ export default function Navigation() {
     }
   };
 
-  if (isLoading || !user) {
+  // Admin area uses its own sidebar — suppress the global top nav there
+  if (isLoading || !user || pathname.startsWith("/admin")) {
     return null;
   }
 

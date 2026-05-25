@@ -6,9 +6,14 @@ export const dynamic = 'force-dynamic';
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute requiredRole="admin">
-      <div className="container mx-auto px-4 py-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
         <AdminNav />
-        {children}
+        {/* lg:pl-56 offsets content past the fixed sidebar width */}
+        <main className="lg:pl-56">
+          <div className="px-5 py-6 max-w-7xl">
+            {children}
+          </div>
+        </main>
       </div>
     </ProtectedRoute>
   );

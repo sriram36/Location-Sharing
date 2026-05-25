@@ -6,9 +6,11 @@ export const dynamic = 'force-dynamic';
 export default function DriverLayout({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute requiredRole="driver">
-      <div className="container mx-auto px-4 py-8">
-        <DriverNav />
-        {children}
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+        <div className="container mx-auto px-5 py-6 max-w-2xl">
+          <DriverNav />
+          {children}
+        </div>
       </div>
     </ProtectedRoute>
   );

@@ -4,12 +4,11 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseClient } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { KeyRound, Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Bus, KeyRound, Eye, EyeOff, AlertCircle, CheckCircle2, ArrowLeft } from "lucide-react";
 import { resetPasswordSchema } from "@/lib/validation";
 
 type PageState = "loading" | "ready" | "success" | "invalid";
@@ -26,41 +25,75 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     const supabase = createSupabaseClient();
+    let settled = false;
+    // eslint-disable-next-line prefer-const
+    let timeoutId: ReturnType<typeof setTimeout>;
 
-    // Supabase fires PASSWORD_RECOVERY when the user arrives via the reset email link
+    const settle = (state: PageState) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      setPageState(state);
+    };
+
+    // Listen for PASSWORD_RECOVERY — fires if the exchange happens after our listener is set up
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
-        setPageState("ready");
-      }
+      if (event === "PASSWORD_RECOVERY") settle("ready");
     });
 
-    // In case the page loads after the event has already fired (e.g. hard refresh),
-    // check if there's an active session from the recovery token
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setPageState("ready");
-      else {
-        // Wait up to 3 s for the PASSWORD_RECOVERY event before declaring invalid
-        setTimeout(() => {
-          setPageState((prev) => (prev === "loading" ? "invalid" : prev));
-        }, 3000);
-      }
-    });
+    // Detect which kind of reset link the user arrived from
+    const searchParams = new URLSearchParams(window.location.search);
+    const code      = searchParams.get("code");       // PKCE flow (?code=xxx)
+    const tokenHash = searchParams.get("token_hash"); // Email OTP flow (?token_hash=xxx&type=recovery)
+    const typeParam = searchParams.get("type");
 
-    return () => subscription.unsubscribe();
+    if (code) {
+      // PKCE: exchange the code for a session.
+      // If the singleton already exchanged it (Navigation ran first), this call will
+      // fail — that's fine, the session already exists; catch it via getSession below.
+      supabase.auth.exchangeCodeForSession(code)
+        .then(({ error: err }) => {
+          if (!err) return; // PASSWORD_RECOVERY event will fire via onAuthStateChange
+          // Exchange failed → code already used by singleton; fall back to session check
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) settle("ready");
+            else settle("invalid");
+          });
+        });
+    } else if (tokenHash && typeParam === "recovery") {
+      // Email OTP recovery flow
+      supabase.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" })
+        .then(({ error: err }) => {
+          if (err) settle("invalid");
+          // PASSWORD_RECOVERY event fires on success
+        });
+    } else {
+      // No URL token — maybe Navigation's getSession() already exchanged the code.
+      // Just check whether a session exists.
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) settle("ready");
+        // else wait for PASSWORD_RECOVERY event (legacy hash flow handled by the client)
+      });
+    }
+
+    // Fallback timeout — long enough for any network round-trip
+    timeoutId = setTimeout(() => settle("invalid"), 10_000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
     const parsed = resetPasswordSchema.safeParse({ password, confirmPassword });
     if (!parsed.success) { setError(parsed.error.issues[0].message); return; }
-
     setLoading(true);
     const supabase = createSupabaseClient();
     const { error: updateErr } = await supabase.auth.updateUser({ password });
     setLoading(false);
-
     if (updateErr) {
       setError(
         updateErr.message.includes("same password")
@@ -74,149 +107,147 @@ export default function ResetPasswordPage() {
     }
   };
 
-  // ── States ────────────────────────────────────────────────────────────────
-  if (pageState === "loading") {
-    return (
-      <Shell>
-        <div className="flex flex-col items-center gap-4 py-8">
-          <div className="animate-spin w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full" />
-          <p className="text-muted-foreground">Verifying reset link…</p>
-        </div>
-      </Shell>
-    );
-  }
-
-  if (pageState === "invalid") {
-    return (
-      <Shell>
-        <div className="text-center py-6 space-y-3">
-          <div className="mx-auto w-14 h-14 bg-red-100 dark:bg-red-950 rounded-full flex items-center justify-center">
-            <AlertCircle className="w-7 h-7 text-red-600 dark:text-red-400" />
-          </div>
-          <p className="font-semibold text-lg">Link invalid or expired</p>
-          <p className="text-sm text-muted-foreground">
-            Password reset links expire after 1 hour. Please request a new one.
-          </p>
-          <Button className="mt-2" onClick={() => router.push("/login")}>
-            Back to Sign In
-          </Button>
-        </div>
-      </Shell>
-    );
-  }
-
-  if (pageState === "success") {
-    return (
-      <Shell>
-        <div className="text-center py-6 space-y-3">
-          <div className="mx-auto w-14 h-14 bg-green-100 dark:bg-green-950 rounded-full flex items-center justify-center">
-            <CheckCircle2 className="w-7 h-7 text-green-600 dark:text-green-400" />
-          </div>
-          <p className="font-semibold text-lg">Password updated!</p>
-          <p className="text-sm text-muted-foreground">Redirecting you to sign in…</p>
-        </div>
-      </Shell>
-    );
-  }
-
   return (
-    <Shell>
-      <form onSubmit={handleReset} className="space-y-4" noValidate>
-        <div className="space-y-2">
-          <Label htmlFor="password">New Password</Label>
-          <div className="relative">
-            <Input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              placeholder="At least 8 characters"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-              autoComplete="new-password"
-              autoFocus
-              className="pr-10"
-            />
-            <button
-              type="button"
-              tabIndex={-1}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              onClick={() => setShowPassword((v) => !v)}
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
+    <div className="min-h-screen flex flex-col bg-white dark:bg-gray-950">
+      <div className="flex items-center justify-between px-8 py-5 border-b border-gray-100 dark:border-gray-800/60">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <Bus className="w-4 h-4 text-white" />
           </div>
+          <span className="font-bold text-gray-900 dark:text-white text-sm">School Bus Tracker</span>
         </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="confirm">Confirm New Password</Label>
-          <div className="relative">
-            <Input
-              id="confirm"
-              type={showConfirm ? "text" : "password"}
-              placeholder="Repeat your new password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={loading}
-              autoComplete="new-password"
-              className="pr-10"
-            />
-            <button
-              type="button"
-              tabIndex={-1}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              onClick={() => setShowConfirm((v) => !v)}
-            >
-              {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Inline strength hint */}
-        {password.length > 0 && (
-          <StrengthBar password={password} />
-        )}
-
-        {error && (
-          <Alert className="border-red-300 bg-red-50 dark:bg-red-950">
-            <span className="flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
-              <AlertDescription className="text-red-800 dark:text-red-300">{error}</AlertDescription>
-            </span>
-          </Alert>
-        )}
-
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Updating password…" : "Set New Password"}
-        </Button>
-      </form>
-    </Shell>
-  );
-}
-
-// ── Shared card shell ─────────────────────────────────────────────────────
-function Shell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex flex-col">
-      <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>
-      <div className="flex-1 flex items-center justify-center px-4 py-12">
-        <Card className="w-full max-w-md shadow-xl">
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-              <KeyRound className="w-7 h-7 text-white" />
+
+      <div className="flex-1 flex items-center justify-center px-8 py-12">
+        <div className="w-full max-w-sm">
+
+          {pageState === "loading" && (
+            <div className="text-center space-y-4">
+              <div className="animate-spin w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full mx-auto" />
+              <p className="text-gray-500 dark:text-gray-400">Verifying reset link…</p>
             </div>
-            <CardTitle className="text-2xl font-bold">Set New Password</CardTitle>
-            <CardDescription>Choose a strong password for your account</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-4">{children}</CardContent>
-        </Card>
+          )}
+
+          {pageState === "invalid" && (
+            <div className="text-center space-y-5">
+              <div className="w-16 h-16 bg-red-100 dark:bg-red-950 rounded-full flex items-center justify-center mx-auto">
+                <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Link expired</h2>
+                <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm">
+                  Password reset links expire after 1 hour. Please request a new one.
+                </p>
+              </div>
+              <Button className="w-full h-11" onClick={() => router.push("/login")}>
+                <ArrowLeft className="w-4 h-4 mr-2" /> Back to Sign In
+              </Button>
+            </div>
+          )}
+
+          {pageState === "success" && (
+            <div className="text-center space-y-5">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-950 rounded-full flex items-center justify-center mx-auto">
+                <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Password updated!</h2>
+                <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm">Redirecting you to sign in…</p>
+              </div>
+            </div>
+          )}
+
+          {pageState === "ready" && (
+            <>
+              <div className="mb-8">
+                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-950 rounded-xl flex items-center justify-center mb-4">
+                  <KeyRound className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Set new password</h2>
+                <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">Choose a strong password for your account</p>
+              </div>
+
+              <form onSubmit={handleReset} className="space-y-4" noValidate>
+                <div className="space-y-1.5">
+                  <Label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    New Password
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="At least 8 characters"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={loading}
+                      autoComplete="new-password"
+                      autoFocus
+                      className="pr-10"
+                    />
+                    <button type="button" tabIndex={-1}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      onClick={() => setShowPassword((v) => !v)}>
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="confirm" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Confirm New Password
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="confirm"
+                      type={showConfirm ? "text" : "password"}
+                      placeholder="Repeat your new password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      disabled={loading}
+                      autoComplete="new-password"
+                      className="pr-10"
+                    />
+                    <button type="button" tabIndex={-1}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      onClick={() => setShowConfirm((v) => !v)}>
+                      {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {password.length > 0 && <StrengthBar password={password} />}
+
+                {error && (
+                  <Alert className="border-red-200 bg-red-50 dark:bg-red-950/50">
+                    <span className="flex items-start gap-2">
+                      <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
+                      <AlertDescription className="text-red-700 dark:text-red-300">{error}</AlertDescription>
+                    </span>
+                  </Alert>
+                )}
+
+                <Button type="submit" className="w-full h-11" disabled={loading}>
+                  {loading ? "Updating password…" : "Set New Password"}
+                </Button>
+
+                <button type="button" onClick={() => router.push("/login")}
+                  className="flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:underline mt-1">
+                  <ArrowLeft className="h-3.5 w-3.5" /> Back to sign in
+                </button>
+              </form>
+            </>
+          )}
+        </div>
       </div>
+
+      <p className="text-center text-xs text-gray-400 dark:text-gray-600 pb-6">
+        &copy; {new Date().getFullYear()} School Bus Tracker
+      </p>
     </div>
   );
 }
 
-// ── Password strength indicator ────────────────────────────────────────────
 function StrengthBar({ password }: { password: string }) {
   const score = [
     password.length >= 8,
@@ -232,13 +263,10 @@ function StrengthBar({ password }: { password: string }) {
     <div className="space-y-1">
       <div className="flex gap-1">
         {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className={`h-1 flex-1 rounded-full transition-colors ${i <= score ? colour : "bg-gray-200 dark:bg-gray-700"}`}
-          />
+          <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i <= score ? colour : "bg-gray-200 dark:bg-gray-700"}`} />
         ))}
       </div>
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-xs text-gray-400 dark:text-gray-500">{label}</p>
     </div>
   );
 }
