@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseClient } from "@/lib/supabaseClient";
 import { Users, Bus, Route, ClipboardList, MapPin, Plus, Activity } from "lucide-react";
@@ -31,7 +31,12 @@ export default function AdminDashboardPage() {
   const [buses, setBuses] = useState<FleetBus[]>([]);
   const [activeIds, setActiveIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [today, setToday] = useState("");
   const router = useRouter();
+
+  useEffect(() => {
+    setToday(new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }));
+  }, []);
 
   useEffect(() => {
     const supabase = createSupabaseClient();
@@ -47,10 +52,10 @@ export default function AdminDashboardPage() {
           { data: activeLocs },
           { data: busData },
         ] = await Promise.all([
-          supabase.from("users").select("*", { count: "exact", head: true }),
-          supabase.from("buses").select("*", { count: "exact", head: true }),
-          supabase.from("routes").select("*", { count: "exact", head: true }),
-          supabase.from("student_assignments").select("*", { count: "exact", head: true }),
+          supabase.from("users").select("id", { count: "exact", head: true }),
+          supabase.from("buses").select("id", { count: "exact", head: true }),
+          supabase.from("routes").select("id", { count: "exact", head: true }),
+          supabase.from("student_assignments").select("id", { count: "exact", head: true }),
           supabase.from("bus_locations").select("bus_id").gte("timestamp", thirtyMinsAgo),
           supabase.from("buses").select("id, name, status, users(name)").order("name").limit(20),
         ]);
@@ -73,19 +78,19 @@ export default function AdminDashboardPage() {
     })();
   }, []);
 
-  const statCards = [
-    { label: "Total Users",       value: stats.totalUsers,       icon: Users,        color: "bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400" },
-    { label: "Fleet Size",        value: stats.totalBuses,       icon: Bus,          color: "bg-green-100 dark:bg-green-950 text-green-600 dark:text-green-400" },
-    { label: "Active Right Now",  value: stats.activeBuses,      icon: Activity,     color: "bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400" },
+  const statCards = useMemo(() => [
+    { label: "Total Users",       value: stats.totalUsers,       icon: Users,         color: "bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400" },
+    { label: "Fleet Size",        value: stats.totalBuses,       icon: Bus,           color: "bg-green-100 dark:bg-green-950 text-green-600 dark:text-green-400" },
+    { label: "Active Right Now",  value: stats.activeBuses,      icon: Activity,      color: "bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400" },
     { label: "Assignments",       value: stats.totalAssignments, icon: ClipboardList, color: "bg-purple-100 dark:bg-purple-950 text-purple-600 dark:text-purple-400" },
-  ];
+  ], [stats.totalUsers, stats.totalBuses, stats.activeBuses, stats.totalAssignments]);
 
-  const quickActions = [
-    { label: "Add User",        icon: Users,        href: "/admin/dashboard/users",       desc: "Create parent, driver, or admin" },
-    { label: "Add Bus",         icon: Bus,          href: "/admin/dashboard/buses",        desc: "Register a bus to the fleet" },
-    { label: "Create Route",    icon: Route,        href: "/admin/dashboard/routes",       desc: "Define routes and stops" },
-    { label: "Assign Student",  icon: ClipboardList, href: "/admin/dashboard/assignments", desc: "Link a student to a bus" },
-  ];
+  const quickActions = useMemo(() => [
+    { label: "Add User",       icon: Users,         href: "/admin/dashboard/users",        desc: "Create parent, driver, or admin" },
+    { label: "Add Bus",        icon: Bus,           href: "/admin/dashboard/buses",         desc: "Register a bus to the fleet" },
+    { label: "Create Route",   icon: Route,         href: "/admin/dashboard/routes",        desc: "Define routes and stops" },
+    { label: "Assign Student", icon: ClipboardList, href: "/admin/dashboard/assignments",   desc: "Link a student to a bus" },
+  ], []);
 
   if (loading) {
     return (
@@ -104,7 +109,7 @@ export default function AdminDashboardPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Overview</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-          {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+          {today}
         </p>
       </div>
 

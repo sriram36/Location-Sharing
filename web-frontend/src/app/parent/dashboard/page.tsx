@@ -150,7 +150,7 @@ export default function ParentDashboard() {
               className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
                 selectedIdx === i
                   ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-blue-400"
+                  : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-blue-400"
               }`}
             >
               <GraduationCap className="w-3.5 h-3.5" />
@@ -161,7 +161,7 @@ export default function ParentDashboard() {
       )}
 
       {/* Bus info strip */}
-      <div className="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 shadow-sm">
+      <div className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 px-4 py-3 shadow-sm">
         <div className="w-9 h-9 bg-blue-100 dark:bg-blue-950 rounded-lg flex items-center justify-center shrink-0">
           <Bus className="w-4.5 h-4.5 text-blue-600 dark:text-blue-400" />
         </div>
@@ -172,7 +172,7 @@ export default function ParentDashboard() {
       </div>
 
       {/* Map card */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
         <div className="h-[420px] relative">
           {locationLoading ? (
             <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-gray-900">
@@ -211,7 +211,7 @@ export default function ParentDashboard() {
 
         {/* Location footer */}
         {busLocation && (
-          <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between flex-wrap gap-2">
+          <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between flex-wrap gap-2">
             <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <MapPin className="w-3.5 h-3.5 text-blue-500" />
               <span className="font-mono">{busLocation.latitude.toFixed(5)}, {busLocation.longitude.toFixed(5)}</span>
@@ -226,7 +226,7 @@ export default function ParentDashboard() {
 
       {/* All children grid when multiple */}
       {assignments.length > 1 && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm">
           <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">All Children</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {assignments.map((a, i) => (
@@ -236,7 +236,7 @@ export default function ParentDashboard() {
                 className={`text-left px-4 py-3 rounded-xl border transition-all ${
                   selectedIdx === i
                     ? "border-blue-400 bg-blue-50 dark:bg-blue-950 shadow-sm"
-                    : "border-gray-200 dark:border-gray-700 hover:border-blue-300"
+                    : "border-gray-200 dark:border-gray-800 hover:border-blue-300"
                 }`}
               >
                 <p className="font-medium text-sm">{a.student_name}</p>

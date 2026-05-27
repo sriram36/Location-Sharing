@@ -109,14 +109,19 @@ function LoginContent() {
     const parsed = forgotPasswordSchema.safeParse({ email });
     if (!parsed.success) { setMessage({ text: parsed.error.issues[0].message, success: false }); return; }
     setLoading(true);
-    const supabase = createSupabaseClient();
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    setLoading(false);
-    setMessage(error
-      ? { text: friendlyError(error.message), success: false }
-      : { text: "Reset link sent! Check your inbox and click the link to set a new password.", success: true });
+    try {
+      const supabase = createSupabaseClient();
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      setMessage(error
+        ? { text: friendlyError(error.message), success: false }
+        : { text: "Reset link sent! Check your inbox and click the link to set a new password.", success: true });
+    } catch {
+      setMessage({ text: "Connection error. Check your internet and try again.", success: false });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -165,7 +170,7 @@ function LoginContent() {
         </div>
 
         <p className="relative z-10 text-blue-300 text-xs">
-          &copy; {new Date().getFullYear()} School Bus Tracker
+          <span suppressHydrationWarning>&copy; {new Date().getFullYear()} School Bus Tracker</span>
         </p>
       </div>
 

@@ -242,7 +242,7 @@ export default function ResetPasswordPage() {
       </div>
 
       <p className="text-center text-xs text-gray-400 dark:text-gray-600 pb-6">
-        &copy; {new Date().getFullYear()} School Bus Tracker
+        <span suppressHydrationWarning>&copy; {new Date().getFullYear()} School Bus Tracker</span>
       </p>
     </div>
   );

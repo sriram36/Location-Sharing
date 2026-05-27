@@ -110,7 +110,7 @@ export default function Home() {
 
       <footer className="border-t border-gray-100 dark:border-gray-800 py-6">
         <p className="text-center text-sm text-gray-400 dark:text-gray-600">
-          &copy; {new Date().getFullYear()} School Bus Tracker. All rights reserved.
+          <span suppressHydrationWarning>&copy; {new Date().getFullYear()} School Bus Tracker. All rights reserved.</span>
         </p>
       </footer>
     </div>

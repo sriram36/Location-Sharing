@@ -137,7 +137,7 @@ export default function DriverDashboard() {
     <div className="max-w-lg mx-auto space-y-5">
 
       {/* Bus header */}
-      <div className="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+      <div className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 shadow-sm">
         <div className="w-10 h-10 bg-blue-100 dark:bg-blue-950 rounded-lg flex items-center justify-center shrink-0">
           <Bus className="w-5 h-5 text-blue-600 dark:text-blue-400" />
         </div>
@@ -162,7 +162,7 @@ export default function DriverDashboard() {
       <div className={`rounded-2xl border p-8 text-center transition-all duration-500 shadow-sm ${
         isTripActive
           ? "bg-green-50 dark:bg-green-950/50 border-green-200 dark:border-green-800"
-          : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+          : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800"
       }`}>
 
         {/* Status ring */}
@@ -223,7 +223,7 @@ export default function DriverDashboard() {
 
       {/* Live location info */}
       {location && isTripActive && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm space-y-3">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 shadow-sm space-y-3">
           <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
             <MapPin className="w-4 h-4 text-blue-600" /> Current Location
           </p>
@@ -240,7 +240,7 @@ export default function DriverDashboard() {
       )}
 
       {/* Instructions */}
-      <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+      <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
         <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2">How it works</p>
         <ul className="space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
           <li className="flex items-start gap-2"><span className="text-green-500 mt-0.5">•</span> Tap <strong>Start Trip</strong> when you begin your route</li>
