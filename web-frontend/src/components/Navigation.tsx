@@ -33,7 +33,7 @@ export default function Navigation() {
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
-        const { data: profile } = await supabase.from("users").select("*").eq("id", session.user.id).single();
+        const { data: profile } = await supabase.from("users").select("id, email, role, name").eq("id", session.user.id).single();
         if (profile) setUser(profile);
       }
       setIsLoading(false);
@@ -44,7 +44,7 @@ export default function Navigation() {
         setUser(null);
         router.push("/");
       } else {
-        const { data: profile } = await supabase.from("users").select("*").eq("id", session.user.id).single();
+        const { data: profile } = await supabase.from("users").select("id, email, role, name").eq("id", session.user.id).single();
         if (profile) setUser(profile);
       }
     });

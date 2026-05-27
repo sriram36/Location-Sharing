@@ -26,21 +26,26 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
       }
 
       if (requiredRole) {
-        const { data: profile } = await supabase
-          .from("users")
-          .select("role")
-          .eq("id", session.user.id)
-          .single();
+        // Read role from JWT user_metadata — no extra DB round-trip needed.
+        // If the role is missing (edge case), fall back to a DB query.
+        const role: string | undefined = session.user.user_metadata?.role;
 
-        if (!profile) {
-          router.replace("/login");
-          return;
-        }
-
-        if (profile.role !== requiredRole) {
-          // Redirect to their actual dashboard instead of blocking
-          router.replace(`/${profile.role}/dashboard`);
-          return;
+        if (role) {
+          if (role !== requiredRole) {
+            router.replace(`/${role}/dashboard`);
+            return;
+          }
+        } else {
+          const { data: profile } = await supabase
+            .from("users")
+            .select("role")
+            .eq("id", session.user.id)
+            .single();
+          if (!profile) { router.replace("/login"); return; }
+          if (profile.role !== requiredRole) {
+            router.replace(`/${profile.role}/dashboard`);
+            return;
+          }
         }
       }
 
@@ -59,10 +64,7 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-muted-foreground">Verifying access...</p>
-        </div>
+        <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
       </div>
     );
   }
