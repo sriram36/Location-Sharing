@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createSupabaseClient } from "@/lib/supabaseClient";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -151,16 +151,16 @@ export default function ManageUsersPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     const supabase = createSupabaseClient();
-    const { data, error } = await supabase.from("users").select("*").order("name");
+    const { data, error } = await supabase.from("users").select("id, name, email, phone, role, created_at").order("name");
     if (error) toast.error(dbError(error.message));
     else setUsers(data ?? []);
     setLoading(false);
-  };
+  }, []);
 
-  useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
   const handleDelete = async (userId: string, name: string) => {
     if (!confirm(`Delete "${name}"? This permanently removes their account.`)) return;
@@ -169,6 +169,8 @@ export default function ManageUsersPage() {
     if (error) toast.error("Could not delete user. Please try again.");
     else { toast.success(`"${name}" deleted.`); fetchUsers(); }
   };
+
+  const handleUserCreated = useCallback(() => { fetchUsers(); setShowForm(false); }, [fetchUsers]);
 
   return (
     <div className="space-y-5">
@@ -189,7 +191,7 @@ export default function ManageUsersPage() {
 
       {/* Create form */}
       {showForm && (
-        <CreateUserPanel onCreated={() => { fetchUsers(); setShowForm(false); }} />
+        <CreateUserPanel onCreated={handleUserCreated} />
       )}
 
       {/* Table */}

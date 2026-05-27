@@ -33,7 +33,7 @@ export default function ProfilePage() {
     const supabase = createSupabaseClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { setLoading(false); return; }
-      supabase.from("users").select("*").eq("id", session.user.id).single().then(({ data }) => {
+      supabase.from("users").select("id, email, name, role, created_at").eq("id", session.user.id).single().then(({ data }) => {
         if (data) { setUser(data); setDisplayName(data.name ?? ""); }
         setLoading(false);
       });

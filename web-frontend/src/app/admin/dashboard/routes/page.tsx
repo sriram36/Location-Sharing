@@ -50,7 +50,7 @@ export default function ManageRoutesPage() {
 
   const fetchStops = async (routeId: string) => {
     const supabase = createSupabaseClient();
-    const { data, error } = await supabase.from("route_stops").select("*").eq("route_id", routeId).order("stop_order");
+    const { data, error } = await supabase.from("route_stops").select("id, name, latitude, longitude, stop_order").eq("route_id", routeId).order("stop_order");
     if (error) toast.error(dbError(error.message));
     else setStops(data ?? []);
   };

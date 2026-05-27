@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createSupabaseClient } from "@/lib/supabaseClient";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -132,7 +132,7 @@ export default function ManageBusesPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     const supabase = createSupabaseClient();
     const [{ data: busData, error: busErr }, { data: driverData }] = await Promise.all([
@@ -143,9 +143,11 @@ export default function ManageBusesPage() {
     else setBuses((busData ?? []) as unknown as BusRow[]);
     setDrivers(driverData ?? []);
     setLoading(false);
-  };
+  }, []);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const handleBusCreated = useCallback(() => { fetchData(); setShowForm(false); }, [fetchData]);
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Delete bus "${name}"? This cannot be undone.`)) return;
@@ -173,7 +175,7 @@ export default function ManageBusesPage() {
       </div>
 
       {showForm && (
-        <CreateBusPanel drivers={drivers} onCreated={() => { fetchData(); setShowForm(false); }} />
+        <CreateBusPanel drivers={drivers} onCreated={handleBusCreated} />
       )}
 
       {loading ? (
